@@ -1,0 +1,14 @@
+prettier: format code
+eslint: find error
+eslint-config-prettier: disable formatting for eslint
+eslint-plugin-prettier: show formatting error when we type using prettier
+
+eslint-config-airbnb
+eslint-plugin-react: airbnb depends on this
+eslint-plugin-node: add some specific eslint for node js
+eslint-plugin-import
+eslint-plugin-jsx-ally
+
+mongoose: an object modeling library that gives a higher level of abtraction over the regular mongodb driver
+
+"*" means definition
