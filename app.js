@@ -1,6 +1,8 @@
 // import libraries
 const express = require('express');
-const morgan = require('morgan'); // display coming request info in the terminal
+
+// morgan is a logger, display coming request info in the terminal
+const morgan = require('morgan');
 
 const tourRouter = require('./routes/tourRoutes');
 
@@ -8,7 +10,7 @@ const userRouter = require('./routes/userRoutes');
 
 const app = express();
 
-console.log(process.env.NODE_ENV);
+console.log(`Running on ${process.env.NODE_ENV}`);
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
