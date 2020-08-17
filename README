@@ -10,5 +10,6 @@ eslint-plugin-import
 eslint-plugin-jsx-ally
 
 mongoose: an object modeling library that gives a higher level of abtraction over the regular mongodb driver
+ndb: debugger for node js
 
 "*": definition

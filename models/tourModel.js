@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-// "slug" is string that is put in url.
+// "slug" is string that is put in url to be retrieved as a variable.
 // "slugify" converts space in string into dash. Ex: "var 1" into "var-1"
 const slugify = require('slugify');
 
@@ -15,10 +15,9 @@ const tourSchema = new mongoose.Schema(
       // the array [ ] contains a value and an error, it is the shortcut of { values: [], message: ''}
       maxlength: [40, 'A tour name must have less or equal 40 characters'],
       minlength: [10, 'A tour name must have greater or equal 10 characters'],
-      validate: [
-        validator.isAlpha,
-        'A tour name must only contains characters',
-      ],
+
+      // validator.isAlpha doesn't work for string containing spaces
+      // validate: [ validator.isAlpha,'A tour name must only contains characters',],
     },
     slug: String,
     duration: {

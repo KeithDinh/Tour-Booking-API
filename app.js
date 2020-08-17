@@ -1,11 +1,12 @@
 // import libraries
 const express = require('express');
 
-// morgan is a logger, display coming request info in the terminal
+// morgan is a logger, display coming request info in the terminal (route, status code, time)
 const morgan = require('morgan');
 
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
-
 const userRouter = require('./routes/userRoutes');
 
 const app = express();
@@ -26,14 +27,33 @@ app.use((req, res, next) => {
 });
 
 // ************** All routes
-// app.get('/api/v1/tours', getAllTours );
-// app.get('/api/v1/tours/:id', getTour);
-// app.post('/api/v1/tours', createTour);
-// app.patch('/api/v1/tours/:id', updateTour);
-// app.delete('/api/v1/tours/:id', deleteTour);
+/* 
+app.get('/api/v1/tours', getAllTours );
+app.get('/api/v1/tours/:id', getTour);
+app.post('/api/v1/tours', createTour);
+app.patch('/api/v1/tours/:id', updateTour);
+app.delete('/api/v1/tours/:id', deleteTour); 
+*/
 
 // shortcut
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
+// Handler for all unhandled routes
+
+// This route must be written last to avoid being called before other existing routes execute
+app.all('*', (req, res, next) => {
+  // const err = new Error(`Can't find ${req.originalUrl} on this server!`);
+  // err.status = 'fail';
+  // err.statusCode = 404;
+
+  /* 
+    When pass an arg to 'next()', it's always considered as 'error'
+    The 'next(err)' skips all other middlewares and execute the one
+    that has the 'err' arg
+  */
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+app.use(globalErrorHandler);
 module.exports = app;
