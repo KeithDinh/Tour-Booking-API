@@ -1,3 +1,5 @@
+********************* ESLINT AND PRETTIER *********************
+
 prettier: format code
 eslint: find error
 eslint-config-prettier: disable formatting for eslint
@@ -9,7 +11,22 @@ eslint-plugin-node: add some specific eslint for node js
 eslint-plugin-import
 eslint-plugin-jsx-ally
 
+********************* APP NOTES *********************
+
 mongoose: an object modeling library that gives a higher level of abtraction over the regular mongodb driver
 ndb: debugger for node js
 
 "*": definition
+
+To detect if a function is asynchronous, use the function's constructor.name property:
+console.log(myFunction.constructor.name === "AsyncFunction");
+
+JWT: iat: issued at | exp: expired
+
+********************* POSTMAN NOTES *********************
+
+Postman allows users to create environments (Ex: development, prod, etc.)
+Variables in Postman are called in between two curly brackets {{ }}
+
+
+In test, pm.environment.set("jwt", pm.response.json().token) set the variable in the environment

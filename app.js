@@ -23,6 +23,7 @@ app.use(express.static(`${__dirname}/public`));
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
+  // console.log(req.headers);
   next(); // Next() tells app to move on the next middlewhere without being stuck
 });
 
@@ -55,5 +56,6 @@ app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
+// when pass an arg to next(), it provokes the middleware globalErrorHandler (err, req, res, next)
 app.use(globalErrorHandler);
 module.exports = app;

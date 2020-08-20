@@ -87,8 +87,8 @@ const tourSchema = new mongoose.Schema(
   },
   {
     // cover 2 cases: JSON and Object
-    toJSON: { virtuals: true }, // if data is outputted as JSON (more often), show virtual properties
-    toObject: { virtuals: true }, // if data is outputted as Object, show virtual properties
+    toJSON: { virtuals: true }, // if data is outputted as JSON (more often), display virtual properties
+    toObject: { virtuals: true }, // if data is outputted as Object, display virtual properties
   }
 );
 
@@ -98,14 +98,14 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
-// *4 types of Mongoose middleware(or pre/pose hooks): document, query, aggregate, and model
+// *4 types of Mongoose middleware(or pre/post hooks): document, query, aggregate, and model
 // More info at: https://mongoosejs.com/docs/middleware.html
 
 // 1) DOCUMENT MIDDLEWARE: runs before .save() and .create()
 // pre hooks executes before an event (in this case is 'save')
 tourSchema.pre('save', function (next) {
   // create the slug. NEED to add to the schema fields to display
-  this.slug = slugify(this.name, { lower: true });
+  this.slug = slugify(this.name, { lower: true }); // Ex: name: "Test tour 2", slug: "Test-tour-2"
   next();
 });
 

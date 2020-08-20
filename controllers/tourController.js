@@ -1,5 +1,4 @@
 const Tour = require('../models/tourModel');
-const { query } = require('express');
 
 // using high-order function to avoid repeat try/catch block for each handler
 const catchAsync = require('../utils/catchAsync');
