@@ -102,7 +102,7 @@ tourSchema.virtual('durationWeeks').get(function () {
 // More info at: https://mongoosejs.com/docs/middleware.html
 
 // 1) DOCUMENT MIDDLEWARE: runs before .save() and .create()
-// pre hooks executes before an event (in this case is 'save')
+// pre hooks executes before an event (in this case is 'save'. Ex: user.save() in authController.js)
 tourSchema.pre('save', function (next) {
   // create the slug. NEED to add to the schema fields to display
   this.slug = slugify(this.name, { lower: true }); // Ex: name: "Test tour 2", slug: "Test-tour-2"
@@ -136,7 +136,7 @@ tourSchema.pre('aggregate', function (next) {
   // This query is to skip secret tours on aggregate
   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
 
-  console.log(this);
+  // console.log(this);
   next();
 });
 

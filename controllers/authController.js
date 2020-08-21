@@ -3,6 +3,8 @@ const { promisify } = require('util');
 const catchAsync = require('../utils/catchAsync');
 const jwt = require('jsonwebtoken');
 const AppError = require('../utils/appError');
+const sendEmail = require('../utils/email');
+const crypto = require('crypto');
 
 const signToken = (id) => {
   // jwt.sign: create token(id, secret_string, expireTime)
@@ -10,6 +12,21 @@ const signToken = (id) => {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
+
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user: user,
+    },
+  });
+};
+
+// ********************************************************
+// ********************** MIDDLEWARE **********************
 
 exports.signup = catchAsync(async (req, res, next) => {
   /* This line sends entire body data to the server,
@@ -26,15 +43,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     role: req.body.role,
   });
 
-  const token = signToken(newUser._id);
-
-  res.status(201).json({
-    status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -60,14 +69,10 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', 401)); // 401 bad authentication
   }
   // 3) If things are ok, send token to client
-  const token = signToken(user._id);
-
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 });
 
+// Middleware check if token is valid to keep user without logging in
 exports.protect = catchAsync(async (req, res, next) => {
   // 1) Get token and check if it exists
   // Headers KEY: Authorization | VALUE: 'Bearer eyJ...fTbzPsVSk0'
@@ -114,6 +119,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
+// Middleware to restrict users on their roles
 // with spread operator, "roles" is an array of arguments ex: ['admin', 'lead-guide']
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
@@ -138,10 +144,90 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   const resetToken = user.createPasswordResetToken();
 
   /* "createPasswordResetToken" creates/modifies data but doesn't save to database
-  we need to save the data (hashed token and expires date) to the database
-  "validateBeforeSave: false" will ignore all validations specified in the model */
+    we need to save the data (hashed token and expires date) to the database
+    "validateBeforeSave: false" will ignore all validations specified in the model */
   await user.save({ validateBeforeSave: false });
+
   // 3) send it to user's email
+  const resetURL = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/resetPassword/${resetToken}`;
+
+  const message = `Forgot your password? Submit a PATCH request with your new password and passswordConfirm to ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Your password reset token (valid for 10 minutes)',
+      message,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email!',
+    });
+  } catch (error) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError('There was an error sending the email. Try again later', 500)
+    );
+  }
 });
 
-exports.resetPassword = (req, res, next) => {};
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+
+    // Date.now() must be in range [passwordReset token issued, passwordReset token expired]
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  // 2) If token has not expired, and there is user, set the new password
+  if (!user) {
+    return next(new AppError('Token is invalid or has expired', 400));
+  }
+
+  // Update the new password
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+
+  // Remove the token used for resetting password
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+
+  // save into database, by default validateBeforeSave is true. We want to use modelSchema to re-validate
+  await user.save();
+
+  // 3) Update changedPasswordAt property for the user
+
+  // 4) Log the user in, send jwt
+  createSendToken(user, 200, res);
+});
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1) get user from the collection, req.user is from "protect" middleware
+  const user = await User.findById(req.user.id).select('+password');
+
+  // 2) compare current password and password from db before update with the new password
+  if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
+    return next(new AppError('Your current password is wrong ', 401));
+  }
+  // 3) if so, update the password
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+
+  // user.findIdAndUpdate doesn't work because Mongoose does not keep the current value to compare with the new value. It will not re-validate data by the model and will not pre-processing by the hooks to hash password
+  await user.save();
+
+  // 4) log user in, send jwt
+  createSendToken(user, 200, res);
+});

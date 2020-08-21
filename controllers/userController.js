@@ -1,6 +1,7 @@
 const User = require('../models/userModel');
 // using high-order function to avoid repeat try/catch block for each handler
 const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
 
 exports.getAllUsers = catchAsync(async (req, res) => {
   // EXECUTE QUERY
@@ -13,6 +14,22 @@ exports.getAllUsers = catchAsync(async (req, res) => {
     data: {
       users,
     },
+  });
+});
+
+exports.updateMe = catchAsync(async (req, res, next) => {
+  // 1) create error if user posts password data
+  if (req.body.password || req.body.passwordConfirm) {
+    return next(
+      new AppError(
+        'This route is not for password updates. Please use /updateMyPassword',
+        400
+      )
+    );
+  }
+
+  res.status(200).json({
+    status: 'success',
   });
 });
 

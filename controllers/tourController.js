@@ -23,8 +23,8 @@ exports.createTour = async (req, res) => {
 //  It is removed because MongoDB auto assigns and validate ID
 
 // *(req,res): route handler
-// *req.params contains route parameters (in the path portion of the URL)
-// *req.query contains the URL query parameters (after the ? in the URL)
+// *req.params: route parameters (after the / with colon : in the URL)
+// *req.query: the URL query parameters (after the ? in the URL)
 exports.getAllTours = catchAsync(async (req, res, next) => {
   // BUILD QUERY
   const features = new APIFeatures(Tour.find(), req.query)

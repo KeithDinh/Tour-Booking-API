@@ -45,8 +45,12 @@ const userSchema = new mongoose.Schema({
   passwordResetExpires: Date,
 });
 
+// ************************************************
+// ****************** MIDDLEWARE ******************
+
 userSchema.pre('save', async function (next) {
   // if the password is NOT modified => no need to hash => jump to next middleware
+  // *isModified is a built-in function
   if (!this.isModified('password')) return next();
 
   // hash the pw with cost of 12
@@ -57,6 +61,17 @@ userSchema.pre('save', async function (next) {
 
   next();
 });
+
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  // I find this not neccessary, but subtract 1s to make sure the password is changed before creating a token
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+// *********************************************
+// ****************** METHODS ******************
 
 /* Think about Schema as a class with methods, * to use the "correctPassword",
  there have to be an instance of the model containing the schema (which is the data/document) */
@@ -83,18 +98,24 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 userSchema.methods.createPasswordResetToken = function () {
   // create a random string 32 chars and convert to hex
   const resetToken = crypto.randomBytes(32).toString('hex');
-  console.log('resetToken', resetToken);
 
   // use algorithm sha256, hash the token, and output format to hex
   this.passwordResetToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-  console.log('passwordResetToken', this.passwordResetToken);
 
   // Date.now() return current time in milliseconds, 10 minutes = 10*60*1000 milliseconds
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
+  /* 
+  Save the hashed token to db, but send the actual token to user's email
+  Explaination: 
+  * real token in db and hashed token to users 
+    => hackers can access db and hash the real token to get actual token
+  * hashed token in db and actual token to users 
+    => hackers can access db but CANNOT revert the hashed token
+  */
   return resetToken;
 };
 const User = mongoose.model('User', userSchema);

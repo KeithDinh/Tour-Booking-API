@@ -1,32 +1,59 @@
-********************* ESLINT AND PRETTIER *********************
+********************* ESLINT & PRETTIER *********************
 
 prettier: format code
 eslint: find error
 eslint-config-prettier: disable formatting for eslint
 eslint-plugin-prettier: show formatting error when we type using prettier
 
-eslint-config-airbnb
 eslint-plugin-react: airbnb depends on this
+eslint-config-airbnb
 eslint-plugin-node: add some specific eslint for node js
 eslint-plugin-import
 eslint-plugin-jsx-ally
 
+
 ********************* APP NOTES *********************
 
-mongoose: an object modeling library that gives a higher level of abtraction over the regular mongodb driver
-ndb: debugger for node js
-
 "*": definition
+
+*(req,res): route handler
+*req.params: route parameters (after the / with colon : in the URL)
+*req.query: the URL query parameters (after the ? in the URL)
 
 To detect if a function is asynchronous, use the function's constructor.name property:
 console.log(myFunction.constructor.name === "AsyncFunction");
 
+********************* TOKEN NOTES *********************
+
 JWT: iat: issued at | exp: expired
+
+
+********** FORGOT PASSWORD NOTES **********
+Save the hashed token to db, but send the actual token to user's email
+    Explanation: 
+    1st method: real token in db and hashed token to users 
+        => hackers can access db and hash the real token to get actual token
+    2nd method: hashed token in db and actual token to users 
+        => hackers can access db but CANNOT revert the hashed token to get actual token
+    => 2nd is safer 
+
+********************* MONGOOSE NOTES *********************
+
+mongoose: an object modeling library that gives a higher level of abtraction over the regular mongodb driver
+ndb: debugger for node js
+*isModified is a built-in function
+
+********************* EMAIL NOTES *********************
+
+Mailtrap: a development service that fakes to send emails to real addresses
+These emails end up trapped in a development inbox
+
 
 ********************* POSTMAN NOTES *********************
 
 Postman allows users to create environments (Ex: development, prod, etc.)
 Variables in Postman are called in between two curly brackets {{ }}
 
-
 In test, pm.environment.set("jwt", pm.response.json().token) set the variable in the environment
+
+
