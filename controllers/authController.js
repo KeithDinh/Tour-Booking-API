@@ -16,6 +16,21 @@ const signToken = (id) => {
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
 
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 60 * 1000 // convert to milliseconds
+    ),
+    secure: false, // true: cookie'll only be sent on a encrypted connections: https
+    httpOnly: true, // cookie cannot be accessed or modified in any way by the browser, httpOnly: receive, store, and send cookie with every request
+  };
+  if (process.env.NODE_ENV == 'production') {
+    cookieOptions.secure = true;
+  }
+
+  res.cookie('jwt', token, cookieOptions);
+
+  user.password = undefined;
+
   res.status(statusCode).json({
     status: 'success',
     token,
@@ -225,7 +240,9 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
 
-  // user.findIdAndUpdate doesn't work because Mongoose does not keep the current value to compare with the new value. It will not re-validate data by the model and will not pre-processing by the hooks to hash password
+  /* 
+  user.findIdAndUpdate: Mongoose doesn't keep the current value to compare with the new value. It doesn't re-validate data by the model validations or pre-processing by the hooks to hash password. Only use when the data is NOT password
+  */
   await user.save();
 
   // 4) log user in, send jwt

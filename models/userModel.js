@@ -43,11 +43,17 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false, // will never show up in any request
+  },
 });
 
 // ************************************************
 // ****************** MIDDLEWARE ******************
 
+// hash password before storing to db
 userSchema.pre('save', async function (next) {
   // if the password is NOT modified => no need to hash => jump to next middleware
   // *isModified is a built-in function
@@ -62,6 +68,7 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// set the time when the password is changed
 userSchema.pre('save', function (next) {
   if (!this.isModified('password') || this.isNew) return next();
 
@@ -70,11 +77,19 @@ userSchema.pre('save', function (next) {
   next();
 });
 
+// only show active users
+userSchema.pre(/^find/, function (next) {
+  // { active: true }, default accounts don't have property "active"
+  this.find({ active: { $ne: false } });
+  next();
+});
 // *********************************************
 // ****************** METHODS ******************
 
 /* Think about Schema as a class with methods, * to use the "correctPassword",
  there have to be an instance of the model containing the schema (which is the data/document) */
+
+// compare new and old passwords
 userSchema.methods.correctPassword = async function (
   candidatePassword, // password to check
   userPassword // hashed password in the database

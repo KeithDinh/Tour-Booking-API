@@ -23,9 +23,10 @@ eslint-plugin-jsx-ally
 To detect if a function is asynchronous, use the function's constructor.name property:
 console.log(myFunction.constructor.name === "AsyncFunction");
 
+*mergeParams: Preserve the req.params values from the parent router. If the parent and the child have conflicting param names, the child’s value take precedence.
 ********************* TOKEN NOTES *********************
 
-JWT: iat: issued at | exp: expired
+JWT properties: iat-issued at | exp - expiration
 
 
 ********** FORGOT PASSWORD NOTES **********
@@ -42,6 +43,12 @@ Save the hashed token to db, but send the actual token to user's email
 mongoose: an object modeling library that gives a higher level of abtraction over the regular mongodb driver
 ndb: debugger for node js
 *isModified is a built-in function
+
+*.findIdAndUpdate: Mongoose doesn't keep the current value to compare with the new value. It doesn't re-validate data by the model validations or pre-processing by the hooks to hash password. Only use when the data is NOT password
+
+"post" hook does not have "next" like "pre" hook
+
+// using regex, schema.pre(/^findOneAnd/) is called when any findOneAnd function is called (NOTE: findIdAndUpdate, findIdAndDelete are shorthands of findOneAnd with id)
 
 ********************* EMAIL NOTES *********************
 

@@ -8,9 +8,8 @@ class APIFeatures {
     // parse objects to get each query param
     const queryObj = { ...this.reqQuery };
 
-    // exclude these fields because of future features such as pagination, sorting algorithm, etc.
+    // exclude these fields, they will be implemented in other functions as pagination, sorting algorithm, etc.
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
-
     excludedFields.forEach((el) => delete queryObj[el]);
 
     // Advanced Filtering

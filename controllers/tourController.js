@@ -5,6 +5,8 @@ const catchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 
+const factory = require('./handlerFactory');
+
 /*
 Original try/catch block
 exports.createTour = async (req, res) => {
@@ -25,26 +27,17 @@ exports.createTour = async (req, res) => {
 // *(req,res): route handler
 // *req.params: route parameters (after the / with colon : in the URL)
 // *req.query: the URL query parameters (after the ? in the URL)
-exports.getAllTours = catchAsync(async (req, res, next) => {
-  // BUILD QUERY
-  const features = new APIFeatures(Tour.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
+// exports.getAllTours = catchAsync(async (req, res, next) => {
+//   // BUILD QUERY
+//   const features = new APIFeatures(Tour.find(), req.query)
+//     .filter().sort().limitFields().paginate();
 
-  // EXECUTE QUERY
-  const tours = await features.mongoModelQuery;
+//   // EXECUTE QUERY
+//   const tours = await features.mongoModelQuery;
 
-  // SEND RESPONSE
-  res.status(200).json({
-    status: 'success',
-    results: tours.length,
-    data: {
-      tours,
-    },
-  });
-});
+//   // SEND RESPONSE
+//   res.status(200).json({status: 'success',results: tours.length,data: {tours,},});});
+exports.getAllTours = factory.getAll(Tour);
 
 exports.aliasTopTours = async (req, res, next) => {
   req.query.limit = 5;
@@ -53,53 +46,29 @@ exports.aliasTopTours = async (req, res, next) => {
   next();
 };
 
-exports.getTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findById(req.params.id);
-  // alternative: Tour.findOne({_id: req.params.id})
-  if (!tour) {
-    return next(new AppError(`No tour found with that ID`, 404));
-  }
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
-});
+// exports.getTour = catchAsync(async (req, res, next) => {
+//   // populate('guides'): display referenced data only on query
+//   const tour = await Tour.findById(req.params.id).populate('reviews');
+//   // alternative: Tour.findOne({_id: req.params.id})
+//   if (!tour) { return next(new AppError(`No tour found with that ID`, 404));}
+//   res.status(200).json({status: 'success',data: {tour,},});});
+exports.getTour = factory.getOne(Tour, { path: 'review' });
 
-exports.createTour = catchAsync(async (req, res, next) => {
-  const newTour = await Tour.create(req.body);
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour: newTour,
-    },
-  });
-});
+// exports.createTour = catchAsync(async (req, res, next) => {
+//   const newTour = await Tour.create(req.body);
+//   res.status(201).json({ status: 'success',data: {tour: newTour,},});});
+exports.createTour = factory.createOne(Tour);
 
-exports.updateTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true, // true: when there is an update, mongoose.Schema will recheck the validator
-  });
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
-});
+// exports.updateTour = catchAsync(async (req, res, next) => {
+//   const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {  new: true, runValidators: true, // true: when there is an update, mongoose.Schema will recheck the validator  });
+//   res.status(200).json({ status: 'success',  data: {  tour,  }, }); });
+exports.updateTour = factory.updateOne(Tour);
 
-exports.deleteTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findByIdAndDelete(req.params.id);
-  if (!tour) {
-    return next(new AppError(`No tour found with that ID`, 404));
-  }
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
-});
+// exports.deleteTour = catchAsync(async (req, res, next) => {
+//   const tour = await Tour.findByIdAndDelete(req.params.id);
+//   if (!tour) {return next(new AppError(`No tour found with that ID`, 404)); }
+//   res.status(204).json({  status: 'success',  data: null, }); });
+exports.deleteTour = factory.deleteOne(Tour);
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
   const stats = await Tour.aggregate([
@@ -178,5 +147,71 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
     data: {
       plan,
     },
+  });
+});
+
+// Ex from Google: /tours-within/23/center/29.7410991,-95.3627635/unit/mi
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  // convert radius to radian, Earch's radius: 3963.3 mi, 6378.1 km
+  const radius = unit === 'mi' ? distance / 3963.3 : distance / 6378.1;
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latitude and longitude in the format lat,lng.',
+        400
+      )
+    );
+  }
+  // in Mongo geospatial, longtitude then latitude
+  const tours = await Tour.find({
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
+  });
+  console.log(distance, lat, lng, unit);
+  res.status(200).json({
+    status: 'success',
+    result: tours.length,
+    data: tours,
+  });
+});
+
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  const multiplier = unit === 'mi' ? 0.000621371 : 0.001;
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latitude and longitude in the format lat,lng.',
+        400
+      )
+    );
+  }
+
+  // the distance by default will result in meter
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [lng * 1, lat * 1],
+        },
+        distanceField: 'distance',
+        distanceMultiplier: multiplier, // this converts to kilometer
+      },
+    },
+    {
+      $project: {
+        distance: 1,
+        name: 1,
+      },
+    },
+  ]);
+  res.status(200).json({
+    status: 'success',
+    data: distances,
   });
 });
