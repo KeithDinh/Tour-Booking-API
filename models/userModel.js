@@ -56,7 +56,7 @@ const userSchema = new mongoose.Schema({
 // hash password before storing to db
 userSchema.pre('save', async function (next) {
   // if the password is NOT modified => no need to hash => jump to next middleware
-  // *isModified is a built-in function
+  // *isModified and *isNew is a built-in function
   if (!this.isModified('password')) return next();
 
   // hash the pw with cost of 12
@@ -87,7 +87,7 @@ userSchema.pre(/^find/, function (next) {
 // ****************** METHODS ******************
 
 /* Think about Schema as a class with methods, * to use the "correctPassword",
- there have to be an instance of the model containing the schema (which is the data/document) */
+ there has to be an instance of the model containing the schema (which is the data/document) */
 
 // compare new and old passwords
 userSchema.methods.correctPassword = async function (

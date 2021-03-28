@@ -11,19 +11,31 @@ eslint-plugin-node: add some specific eslint for node js
 eslint-plugin-import
 eslint-plugin-jsx-ally
 
+dotenv: a zero-dependency module that loads env variables from a .env file into process.env
+
+express-rate-limit: prevent same IP from making too many requests, denial of service or brute force attacks. It counts the number of requests coming from one IP, and if too many requests, it will lock the IP
+helmet: set security http headers
+morgan: a logger, display coming request info in the terminal (route, status code, time)
+express-mongo-sanitize: prevent injecting query in req
+xss-clean: prevent injecting html js in req
+hpp: http parameter pollution
+
+validator: A library of string validators and sanitizers.
+
 
 ********************* APP NOTES *********************
 
 "*": definition
 
 *(req,res): route handler
-*req.params: route parameters (after the / with colon : in the URL)
+*req.params: route parameters (after the / with colon : in the URL) /:id
 *req.query: the URL query parameters (after the ? in the URL)
 
 To detect if a function is asynchronous, use the function's constructor.name property:
 console.log(myFunction.constructor.name === "AsyncFunction");
 
 *mergeParams: Preserve the req.params values from the parent router. If the parent and the child have conflicting param names, the child’s value take precedence.
+
 ********************* TOKEN NOTES *********************
 
 JWT properties: iat-issued at | exp - expiration
