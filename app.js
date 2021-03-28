@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const limiter = rateLimit({
-  max: 100, // 100 requests on the same IP
+  max: 100, // max 100 requests on the same IP within 1 hour = 3 600 000 ms
   windowMs: 60 * 60 * 1000, // one hour to milliseconds
   message: 'Too many requests from this IP, please try again in an hour!',
 });
@@ -63,7 +63,7 @@ This allowes them to look at the errors that developer didn't cover (use AppErro
 Using hpp, Mongo will take the last value of "sort" */
 app.use(
   hpp({
-    // array of properties allowed to be duplicate
+    // list of properties allowed to be duplicate
     whitelist: [
       'duration',
       'ratingsQuantity',
